@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	monitoringv1 "github.com/coreos/prometheus-operator/pkg/client/versioned"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/clientcmd"
 	clientapi "k8s.io/client-go/tools/clientcmd/api"
@@ -126,16 +127,25 @@ func uploadPrometheusRules(t templates.TemplateData, c *clientapi.Config, dryRun
 		return
 	}
 
+	ctx := context.Background()
+	var cOpts metav1.CreateOptions
+	var gOpts metav1.GetOptions
+	var uOpts metav1.UpdateOptions
+
 	for _, rule := range rules.Items {
 		log.Printf("Uploading rule %s to namespace %s, in context %s", rule.GetName(), namespace, t.Context)
-		_, err := api.MonitoringV1().PrometheusRules(namespace).Create(rule)
+		_, err := api.MonitoringV1().PrometheusRules(namespace).Create(ctx, rule, cOpts)
 		if err != nil {
-			p, err := api.MonitoringV1().PrometheusRules(namespace).Get(rule.GetName(), metav1.GetOptions{})
+			log.Printf("Error when trying to create %s: %s", rule.GetName(), err)
+		}
+
+		if err != nil {
+			p, err := api.MonitoringV1().PrometheusRules(namespace).Get(ctx, rule.GetName(), gOpts)
 			if err != nil {
 				log.Fatalf("Failed to get %s when trying to update: %s", rule.GetName(), err)
 			}
 			rule.SetResourceVersion(p.GetResourceVersion())
-			_, err = api.MonitoringV1().PrometheusRules(namespace).Update(rule)
+			_, err = api.MonitoringV1().PrometheusRules(namespace).Update(ctx, rule, uOpts)
 			if err != nil {
 				oldBuf, _ := json.MarshalIndent(p, "", "  ")
 				newBuf, _ := json.MarshalIndent(rule, "", "  ")

@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/G-Research/prometheus-config-loader/cfgloader/rulefmt"
+	"github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -109,13 +109,15 @@ func ParseRuleSpec(data []byte) (v1.PrometheusRuleSpec, error) {
 	}
 
 	for _, g := range intermediate.Groups {
-		rg := v1.RuleGroup{Name: g.Name, Interval: g.Interval}
+		interval := v1.Duration(g.Interval)
+		rg := v1.RuleGroup{Name: g.Name, Interval: &interval}
 		for _, r := range g.Rules {
+			duration := v1.Duration(r.For)
 			tmp := v1.Rule{
 				Record:      r.Record,
 				Alert:       r.Alert,
 				Expr:        intstr.FromString(r.Expr),
-				For:         r.For,
+				For:         &duration,
 				Labels:      r.Labels,
 				Annotations: r.Annotations,
 			}
