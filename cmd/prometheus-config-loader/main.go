@@ -134,7 +134,7 @@ func uploadPrometheusRules(t templates.TemplateData, c *clientapi.Config, dryRun
 
 	for _, rule := range rules.Items {
 		log.Printf("Uploading rule %s to namespace %s, in context %s", rule.GetName(), namespace, t.Context)
-		_, err := api.MonitoringV1().PrometheusRules(namespace).Create(ctx, rule, cOpts)
+		_, err := api.MonitoringV1().PrometheusRules(namespace).Create(ctx, &rule, cOpts)
 		if err != nil {
 			log.Printf("Error when trying to create %s: %s", rule.GetName(), err)
 		}
@@ -145,7 +145,7 @@ func uploadPrometheusRules(t templates.TemplateData, c *clientapi.Config, dryRun
 				log.Fatalf("Failed to get %s when trying to update: %s", rule.GetName(), err)
 			}
 			rule.SetResourceVersion(p.GetResourceVersion())
-			_, err = api.MonitoringV1().PrometheusRules(namespace).Update(ctx, rule, uOpts)
+			_, err = api.MonitoringV1().PrometheusRules(namespace).Update(ctx, &rule, uOpts)
 			if err != nil {
 				oldBuf, _ := json.MarshalIndent(p, "", "  ")
 				newBuf, _ := json.MarshalIndent(rule, "", "  ")

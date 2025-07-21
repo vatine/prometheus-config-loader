@@ -44,7 +44,7 @@ func LoadConfigurationDirectory(directory, namespace, prometheus string) (*v1.Pr
 		if err != nil {
 			errSeen = err
 		} else {
-			rv.Items = append(rv.Items, rule)
+			rv.Items = append(rv.Items, *rule)
 		}
 	}
 
@@ -113,11 +113,15 @@ func ParseRuleSpec(data []byte) (v1.PrometheusRuleSpec, error) {
 		rg := v1.RuleGroup{Name: g.Name, Interval: &interval}
 		for _, r := range g.Rules {
 			duration := v1.Duration(r.For)
+			var durp *v1.Duration
+			if duration != "" {
+				durp = &duration
+			}
 			tmp := v1.Rule{
 				Record:      r.Record,
 				Alert:       r.Alert,
 				Expr:        intstr.FromString(r.Expr),
-				For:         &duration,
+				For:         durp,
 				Labels:      r.Labels,
 				Annotations: r.Annotations,
 			}
