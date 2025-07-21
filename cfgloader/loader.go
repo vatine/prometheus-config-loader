@@ -109,7 +109,10 @@ func ParseRuleSpec(data []byte) (v1.PrometheusRuleSpec, error) {
 	}
 
 	for _, g := range intermediate.Groups {
-		interval := v1.Duration(g.Interval)
+		var interval *v1.Duration
+		if g.Interval != "" {
+			interval = v1.Duration(g.Interval)
+		}
 		rg := v1.RuleGroup{Name: g.Name, Interval: &interval}
 		for _, r := range g.Rules {
 			duration := v1.Duration(r.For)
